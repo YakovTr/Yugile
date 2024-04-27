@@ -59,12 +59,14 @@ async def view_balance(update: Update, context: CallbackContext):
 async def help(update: Update, context: CallbackContext):
     help_text = 'Список команд:\n\n' \
                 '/start - начать работу с ботом\n' \
-                '/add_expense - добавить расход(чтобы добавить расход напишите в одном сообщении "@add_expense сумма категория)"\n' \
-                '/add_income - добавить доход(чтобы добавить доход напишите в одном сообщении "@add_expense сумма категория)"\n' \
+                '/add_expense - добавить расход (чтобы добавить расход напишите в одном сообщении через пробел ' \
+                '"/add_expense сумма категория)"\n' \
+                '/add_income - добавить доход (чтобы добавить доход напишите в одном сообщении через пробел ' \
+                '"/add_expense сумма категория)"\n' \
                 '/view_balance - посмотреть баланс\n' \
                 '/view_expenses - посмотреть расходы по категориям\n' \
-                '/reset - очистить все доходы и расходы\n' \
-                '/view_incomes - посмотреть доходы по категориям\n'
+                '/view_incomes - посмотреть доходы по категориям\n' \
+                '/reset - очистить все доходы и расходы\n'
     await update.message.reply_text(help_text)
 
 
