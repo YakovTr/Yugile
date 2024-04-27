@@ -7,6 +7,7 @@ from telegram.ext import CommandHandler, Application, CallbackContext
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
+
 async def start(update: Update, context: CallbackContext):
     user = update.message.from_user
     with sqlite3.connect('finance.db') as conn:
@@ -17,6 +18,7 @@ async def start(update: Update, context: CallbackContext):
             cursor.execute("INSERT INTO users (user_id, username) VALUES (?, ?)", (user.id, user.username))
             conn.commit()
     await update.message.reply_text('Привет, я бот для контроля финансоn\n напишите @help')
+
 
 async def add_expense(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -29,6 +31,7 @@ async def add_expense(update: Update, context: CallbackContext):
         conn.commit()
     await update.message.reply_text(f'Расход добавлены: {amount} в категорию {category}')
 
+
 async def add_income(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     income = update.message.text.split(' ')[1:]
@@ -39,6 +42,7 @@ async def add_income(update: Update, context: CallbackContext):
         cursor.execute("INSERT INTO income (user_id, amount, category) VALUES (?, ?, ?)", (user_id, amount, category))
         conn.commit()
     await update.message.reply_text(f'Доход добавлен: {amount} в категорию {category}')
+
 
 async def view_balance(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -51,6 +55,7 @@ async def view_balance(update: Update, context: CallbackContext):
         balance = income - expenses
     await update.message.reply_text(f'Баланс: {balance}')
 
+
 async def help(update: Update, context: CallbackContext):
     help_text = 'Список команд:\n\n' \
                 '/start - начать работу с ботом\n' \
@@ -61,6 +66,7 @@ async def help(update: Update, context: CallbackContext):
                 '/reset - очистить все доходы и расходы\n' \
                 '/view_incomes - посмотреть доходы по категориям\n'
     await update.message.reply_text(help_text)
+
 
 async def view_expenses(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -76,6 +82,7 @@ async def view_expenses(update: Update, context: CallbackContext):
             expense_text += f'{category}: {amount}\n'
         await update.message.reply_text(expense_text)
 
+
 async def view_incomes(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     with sqlite3.connect('finance.db') as conn:
@@ -89,6 +96,7 @@ async def view_incomes(update: Update, context: CallbackContext):
         for category, amount in incomes:
             income_text += f'{category}: {amount}\n'
         await update.message.reply_text(income_text)
+
 
 async def reset_data(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
@@ -111,7 +119,6 @@ def main():
     application.add_handler(CommandHandler("view_balance", view_balance))
     application.add_handler(CommandHandler("view_expenses", view_expenses))
     application.add_handler(CommandHandler("view_incomes", view_incomes))
-
 
     application.run_polling()
 
