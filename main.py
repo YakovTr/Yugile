@@ -51,49 +51,57 @@ async def view_balance(update: Update, context: CallbackContext):
         balance = income - expenses
     await update.message.reply_text(f'Баланс: {balance}')
 
-async def login(update: Update, context: CallbackContext):
-    user = update.message.from_user
-    with sqlite3.connect('finance.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE user_id = ?", (user.id,))
-        result = cursor.fetchone()
-        if result:
-            await update.message.reply_text('Вы уже в аккаунте')
-        else:
-            cursor.execute("INSERT INTO users (user_id, username) VALUES (?, ?)", (user.id, user.username))
-            conn.commit()
-            await update.message.reply_text('Вы успешно вошли')
+async def help(update: Update, context: CallbackContext):
+    help_text = 'Список команд:\n\n' \
+                '/start - начать работу с ботом\n' \
+                '/add_expense - добавить расход\n' \
+                '/add_income - добавить доход\n' \
+                '/view_balance - посмотреть баланс\n' \
+                '/view_expenses - посмотреть расходы по категориям\n' \
+                '/view_incomes - посмотреть доходы по категориям\n'
+    await update.message.reply_text(help_text)
 
-async def register(update: Update, context: CallbackContext):
-    user = update.message.from_user
+async def view_expenses(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
     with sqlite3.connect('finance.db') as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE user_id = ?", (user.id,))
-        result = cursor.fetchone()
-        if result:
-            await update.message.reply_text('Вы уже зарегистрированы')
-        else:
-            cursor.execute("INSERT INTO users (user_id, username) VALUES (?, ?)", (user.id, user.username))
-            conn.commit()
-            await update.message.reply_text('Вы успешно зарегистрировались')
+        cursor.execute("SELECT category, SUM(amount) FROM expenses WHERE user_id = ? GROUP BY category", (user_id,))
+        expenses = cursor.fetchall()
+        if not expenses:
+            await update.message.reply_text('Нет расходов')
+            return
+        expense_text = 'Расходы по категориям:\n\n'
+        for category, amount in expenses:
+            expense_text += f'{category}: {amount}\n'
+        await update.message.reply_text(expense_text)
+
+async def view_incomes(update: Update, context: CallbackContext):
+    user_id = update.message.from_user.id
+    with sqlite3.connect('finance.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT category, SUM(amount) FROM income WHERE user_id = ? GROUP BY category", (user_id,))
+        incomes = cursor.fetchall()
+        if not incomes:
+            await update.message.reply_text('Нет доходов')
+            return
+        income_text = 'Доходы по категориям:\n\n'
+        for category, amount in incomes:
+            income_text += f'{category}: {amount}\n'
+        await update.message.reply_text(income_text)
+
 
 def main():
-    with sqlite3.connect('finance.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, username TEXT)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, category TEXT, FOREIGN KEY (user_id) REFERENCES users (user_id))")
-        cursor.execute("CREATE TABLE IF NOT EXISTS income (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, category TEXT, FOREIGN KEY (user_id) REFERENCES users (user_id))")
-        conn.commit()
-
-
     application = Application.builder().token(TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help))
     application.add_handler(CommandHandler("add_expense", add_expense))
     application.add_handler(CommandHandler("add_income", add_income))
     application.add_handler(CommandHandler("view_balance", view_balance))
-    application.add_handler(CommandHandler("login", login))
-    application.add_handler(CommandHandler("register", register))
+    application.add_handler(CommandHandler("view_expenses", view_expenses))
+    application.add_handler(CommandHandler("view_incomes", view_incomes))
+
+
     application.run_polling()
 
 
